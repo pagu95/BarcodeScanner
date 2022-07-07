@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button btn_scan;
     public String book_details;
-    public String url = "https://script.google.com/macros/s/AKfycbxgmYntAeBmRIQ9GJi2U_4JLiRsp4U1x-STH9mq2C1Al9iW26_zk5LtJW_2sdtA5LeRtQ/exec?action=getItems&isbn=";
+    public String url = "https://script.google.com/macros/s/AKfycbwDHIBFqE2GH898r32Fqgnbs7r3ZznIYjLqjJoP7uNEtaAQoWKD3jWDQDi_GuGL8-TQcQ/exec?action=getItems&isbn=";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
