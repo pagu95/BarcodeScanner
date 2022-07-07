@@ -3,45 +3,35 @@ package com.example.barcodescanner;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class MainActivity extends AppCompatActivity {
 
-    // creating a variable for
-    // our Firebase Database.
-    FirebaseDatabase firebaseDatabase;
-
-    // creating a variable for our
-    // Database Reference for Firebase.
-    DatabaseReference databaseReference;
-
     Button btn_scan;
-    public String barcode;
+    public String book_details;
+    public String url = "https://script.google.com/macros/s/AKfycbxgmYntAeBmRIQ9GJi2U_4JLiRsp4U1x-STH9mq2C1Al9iW26_zk5LtJW_2sdtA5LeRtQ/exec?action=getItems&isbn=";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // below line is used to get the instance
-        // of our Firebase database.
-        firebaseDatabase = FirebaseDatabase.getInstance();
-
-        // below line is used to get
-        // reference for our database.
-        databaseReference = firebaseDatabase.getReference("books");
-
         setContentView(R.layout.activity_main);
         btn_scan = findViewById(R.id.btn_scan);
         btn_scan.setOnClickListener(v -> {
@@ -61,58 +51,69 @@ public class MainActivity extends AppCompatActivity {
         barLauncher.launch(options);
     }
 
-    private void getdata(String scan) {
+    private static String fetchDetails(String bookString){
+        String title = null;
+        String price = null;
+        String supplier = null;
+        String details = "Book Not Found";
+        try {
+            JSONObject bookJson = new JSONObject(bookString);
+            JSONArray barcode = bookJson.getJSONArray("barcodes");
 
-        DatabaseReference scannedRef = databaseReference.child(scan);
+            title = barcode.getJSONObject(0).getString("title");
+            price = Long.toString(barcode.getJSONObject(0).getLong("price"));
+            supplier = barcode.getJSONObject(0).getString("supplier");
 
+            details = title + " ΤΙΜΗ: " +price + " ΠΡΟΜΗΘΕΥΤΗΣ: " + supplier;
 
-        System.out.println("this is my print" + scannedRef);
-        // calling add value event listener method
-        // for getting the values from database.
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                // this method is call to get the realtime
-                // updates in the data.
-                // this method is called when the data is
-                // changed in our Firebase console.
-                // below line is for getting the data from
-                // snapshot of our database.
-                // barcode = databaseReference.orderByChild("books").equalTo(scan);
-
-                // after getting the value we are setting
-                // our value to our text view in below line.
-                //barcode = scanned_book;
-                //System.out.println("this is my print" + scanned_book);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // calling on cancelled method when we receive
-                // any error or we are not able to get the data.
-                Toast.makeText(MainActivity.this, "Fail to get data.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        return details;
     }
 
-    ActivityResultLauncher<ScanOptions> barLauncher = registerForActivityResult(new ScanContract(), result->
+    private void getdata(String scan) {
+
+        System.out.println("THIS IS THE URL I HIT   " + url + scan);
+
+                StringRequest stringRequest = new StringRequest(Request.Method.GET, url + scan,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        book_details = fetchDetails(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }
+        );
+
+        int socketTimeout = 5000;
+        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout,0,DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+
+        stringRequest.setRetryPolicy(policy);
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+        queue.add(stringRequest);
+
+    };
+
+    ActivityResultLauncher<ScanOptions> barLauncher = registerForActivityResult(new ScanContract(), result ->
     {
-        if(result.getContents() !=null)
-        {
+        if (result.getContents() != null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle("Result");
+
             getdata(result.getContents());
-            //result.getContents = barcode
-            //connect to database and find id = result.getContents and get price
-            builder.setMessage(result.getContents());
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
-            {
+            builder.setMessage(book_details);
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
-                public void onClick(DialogInterface dialogInterface, int i)
-                {
-                    //dialogInterface.dismiss();
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
                 }
             }).show();
         }
