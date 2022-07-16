@@ -51,71 +51,81 @@ public class MainActivity extends AppCompatActivity {
         barLauncher.launch(options);
     }
 
-    private static String fetchDetails(String bookString){
+    public void showDetails(String book_details){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("Result");
+        builder.setMessage(book_details);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        }).show();
+    }
+
+    private String fetchDetails(String bookString) {
         String title = null;
         String price = null;
         String supplier = null;
         String details = "Book Not Found";
         try {
-            JSONObject bookJson = new JSONObject(bookString);
-            JSONArray barcode = bookJson.getJSONArray("barcodes");
 
-            title = barcode.getJSONObject(0).getString("title");
-            price = Long.toString(barcode.getJSONObject(0).getLong("price"));
-            supplier = barcode.getJSONObject(0).getString("supplier");
+            if (!bookString.contains("[]")) {
 
-            details = title + " ΤΙΜΗ: " +price + " ΠΡΟΜΗΘΕΥΤΗΣ: " + supplier;
+                JSONObject bookJson = new JSONObject(bookString);
+                JSONArray barcode = bookJson.getJSONArray("barcodes");
+                title = barcode.getJSONObject(0).getString("title");
+                price = Long.toString(barcode.getJSONObject(0).getLong("price"));
+                supplier = barcode.getJSONObject(0).getString("supplier");
+
+                details = title + " ΤΙΜΗ: " + price + " ΠΡΟΜΗΘΕΥΤΗΣ: " + supplier;
+
+            } else {
+                System.out.println("THIS IS THE ELSE RESULT ->" + bookString);
+            }
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
         return details;
     }
 
     private void getdata(String scan) {
 
-        System.out.println("THIS IS THE URL I HIT   " + url + scan);
+        String book_url = url + scan;
+        System.out.println("THIS IS THE URL I HIT -> " + book_url);
 
-                StringRequest stringRequest = new StringRequest(Request.Method.GET, url + scan,
+        RequestQueue queue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, book_url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        System.out.println("RESPONSE" + response);
                         book_details = fetchDetails(response);
+                        showDetails(book_details);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
+                        System.out.println("THE ERROR IS TRIGGERED: " + error);
                     }
                 }
         );
 
-        int socketTimeout = 5000;
-        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout,0,DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+        int socketTimeout = 50000;
+        RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
 
         stringRequest.setRetryPolicy(policy);
 
-        RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(stringRequest);
 
-    };
+    }
 
     ActivityResultLauncher<ScanOptions> barLauncher = registerForActivityResult(new ScanContract(), result ->
     {
         if (result.getContents() != null) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setTitle("Result");
-
             getdata(result.getContents());
-            builder.setMessage(book_details);
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            }).show();
         }
     });
 
