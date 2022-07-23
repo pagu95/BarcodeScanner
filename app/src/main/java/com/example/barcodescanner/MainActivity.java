@@ -1,5 +1,6 @@
 package com.example.barcodescanner;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.Button;
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     Button btn_scan;
     public String book_details;
     public String url = "https://script.google.com/macros/s/AKfycbyTUIgpvf2ytNTWC-5_VlzIG5xFODwLTE5_29AntcNieZmvTW-RhN3lHNv_CiEgBfr0TQ/exec?action=getItems&isbn=";
+    ProgressDialog loading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
                 JSONObject bookJson = new JSONObject(bookString);
                 JSONArray barcode = bookJson.getJSONArray("barcodes");
                 title = barcode.getJSONObject(0).getString("title");
-                price = Long.toString(barcode.getJSONObject(0).getLong("price"));
+                price = Double.toString(barcode.getJSONObject(0).getDouble("price"));
                 supplier = barcode.getJSONObject(0).getString("supplier");
 
                 details = title + " ΤΙΜΗ: " + price + " ΠΡΟΜΗΘΕΥΤΗΣ: " + supplier;
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println("RESPONSE" + response);
                         book_details = fetchDetails(response);
                         showDetails(book_details);
+                        loading.dismiss();
                     }
                 },
                 new Response.ErrorListener() {
@@ -126,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
     {
         if (result.getContents() != null) {
             getdata(result.getContents());
+            loading = ProgressDialog.show(this,"Loading","please wait",false,true);
         }
     });
 
