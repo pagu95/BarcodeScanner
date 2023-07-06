@@ -4,16 +4,20 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.RetryPolicy;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -28,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button btn_scan;
     public String book_details;
-    public String url = "https://script.google.com/macros/s/AKfycbwug_THuDoP15zV1P4Tld3HhfIFPCMQnx5ghbXu-mbUn0dMyjEvvA6yKf0k2kUY728MNg/exec?action=getItems&isbn=";
+    private static final String API_URL = "https://script.google.com/macros/s/AKfycbwug_THuDoP15zV1P4Tld3HhfIFPCMQnx5ghbXu-mbUn0dMyjEvvA6yKf0k2kUY728MNg/exec?action=getItems&isbn=";
     ProgressDialog loading;
 
     @Override
@@ -94,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getdata(String scan) {
 
-        String book_url = url + scan;
+        String book_url = API_URL + scan;
         System.out.println("THIS IS THE URL I HIT -> " + book_url);
 
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -111,7 +115,13 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        System.out.println("THE ERROR IS TRIGGERED: " + error);
+                        if (error instanceof NetworkError) {
+                            Toast.makeText(getApplicationContext(), "Cannot connect to Internet. Please check your connection.", Toast.LENGTH_SHORT).show();
+                        } else if (error instanceof ServerError) {
+                            Toast.makeText(getApplicationContext(), "Cannot connect to the server. Please try again later.", Toast.LENGTH_SHORT).show();
+                        } else if (error instanceof TimeoutError) {
+                            Toast.makeText(getApplicationContext(), "Connection TimeOut! Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
         );
