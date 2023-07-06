@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button btn_scan;
     public String book_details;
-    public String url = "https://script.google.com/macros/s/AKfycbyTUIgpvf2ytNTWC-5_VlzIG5xFODwLTE5_29AntcNieZmvTW-RhN3lHNv_CiEgBfr0TQ/exec?action=getItems&isbn=";
+    public String url = "https://script.google.com/macros/s/AKfycbwug_THuDoP15zV1P4Tld3HhfIFPCMQnx5ghbXu-mbUn0dMyjEvvA6yKf0k2kUY728MNg/exec?action=getItems&isbn=";
     ProgressDialog loading;
 
     @Override
